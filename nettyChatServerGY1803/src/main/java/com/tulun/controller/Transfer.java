@@ -1,30 +1,43 @@
 package com.tulun.controller;
 
-
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+
+import com.mongodb.client.model.Filters;
 import com.tulun.cantant.EnMsgType;
 import com.tulun.dao.C3p0Instance;
 import com.tulun.dao.JedisPool;
 import com.tulun.mail.Mail;
 import com.tulun.netty.ChannelHandler;
+
+import com.tulun.pojo.Msg;
 import com.tulun.service.TransferFile;
 import com.tulun.util.JsonUtils;
+import com.tulun.util.MongoUtil;
 import com.tulun.util.PortUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import org.bson.Document;
 import redis.clients.jedis.Jedis;
 
+import javax.annotation.Resource;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Transfer {
+    //设置集合名称
+    private static final String COLLECTION_NAME = "msg";
     //用于存储用户在线信息的hashmap,存储格式为： id，channel
     private static  ConcurrentHashMap<Integer, ChannelHandlerContext> hashMap1 = new ConcurrentHashMap<>();
     //用于存储用户在线信息的hashmap，存储格式为：channel，id
     private static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
+    //mongodb工具
+    private static MongoUtil DBUTIL = new MongoUtil("192.168.110.161:27017", "mm");
     //消息解析器
     public String process(String msg, ChannelHandlerContext channel) {
         ObjectNode objectNode = JsonUtils.getObjectNode(msg);
@@ -58,9 +71,11 @@ public class Transfer {
             //如果登录成功的话取出并发送离线消息
             if(success) {
                 //取出离线消息,给该用户发送离线消息
-                String offMsg = getOffMsg(id);
+                String offMsg = null;
+                offMsg = getOffMsg(id);
+
                 System.out.println("offMsg"+offMsg);
-                if(offMsg != null) {
+                if(offMsg != "[]") {
                     ObjectNode nodes2 = JsonUtils.getObjectNode();
                     nodes2.put("type",String.valueOf(EnMsgType.EN_MSG_OFFLINE_MSG));
                     nodes2.put("msg",offMsg);
@@ -210,7 +225,7 @@ public class Transfer {
             String toUser = objectNode.get("toUser").asText();
             String data = objectNode.get("data").asText();
 
-            int state = 0;
+            String state = "0";
             //判断要发送的用户是否在线
             if(isOnline(toUser)) {
                 //在线直接转发消息
@@ -229,7 +244,7 @@ public class Transfer {
                 channel.channel().writeAndFlush(recvMsg);
             } else if(isExistUser(fromUser)){
                 //不在线存储该消息到数据库
-                state = 1;
+                state = "1";
                 storeMsg(fromUser,toUser,data,state);
 
                 //封装返回数据类型
@@ -339,62 +354,92 @@ public class Transfer {
      * 从数据库中取出离线消息
      */
     private String getOffMsg(String id) {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        StringBuilder stringBuilder = new StringBuilder();
-        ArrayList<Integer> integers = new ArrayList<>();
+
+        List<Map<String, Object>> ret = null;
+        Object msg = null;
         try {
-            connection = C3p0Instance.getDataSource().getConnection();
-            String sql = "SELECT * FROM msg WHERE toUserId=? AND state=1";
-            statement = connection.prepareStatement(sql);
-            statement.setString(1,id);
-            resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                String fromUser = resultSet.getString(2);
-                String data = resultSet.getString(4);
-                stringBuilder.append(fromUser);
-                stringBuilder.append(":");
-                stringBuilder.append(data);
-                stringBuilder.append("#");
-                integers.add(Integer.parseInt(resultSet.getString(3)));
-            }
-
-            //设置状态
-            Iterator<Integer> iterator = integers.iterator();
-            while(iterator.hasNext()) {
-                Integer num = iterator.next();
-                sql = "UPDATE msg SET state=0 WHERE toUserId=?";
-                statement = connection.prepareStatement(sql);
-                statement.setInt(1,num);
-                statement.executeUpdate();
-            }
-
-            //返回离线消息列表
-            if(stringBuilder.length() != 0) {
-                return stringBuilder.toString();
-            }
-        } catch (SQLException e) {
+            //取出离线消息
+          ret  = DBUTIL.queryByFilters(COLLECTION_NAME, Filters.and(Filters.eq("toUserId" ,id),Filters.eq("state" ,"1")));
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        Document upd = new Document();
+        upd.put("state", "0");
+
+        try {
+            //更新消息状态
+            String ret1 = DBUTIL.updateManny("msg", Filters.eq("toUserId", id),upd);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String s = ret.toString();
+        return s;
+//        Connection connection = null;
+//        PreparedStatement statement = null;
+//        ResultSet resultSet = null;
+//        StringBuilder stringBuilder = new StringBuilder();
+//        ArrayList<Integer> integers = new ArrayList<>();
+//        try {
+//            connection = C3p0Instance.getDataSource().getConnection();
+//            String sql = "SELECT * FROM msg WHERE toUserId=? AND state=1";
+//            statement = connection.prepareStatement(sql);
+//            statement.setString(1,id);
+//            resultSet = statement.executeQuery();
+//            while (resultSet.next()) {
+//                String fromUser = resultSet.getString(2);
+//                String data = resultSet.getString(4);
+//                stringBuilder.append(fromUser);
+//                stringBuilder.append(":");
+//                stringBuilder.append(data);
+//                stringBuilder.append("#");
+//                integers.add(Integer.parseInt(resultSet.getString(3)));
+//            }
+
+            //设置状态
+//            Iterator<Integer> iterator = integers.iterator();
+//            while(iterator.hasNext()) {
+//                Integer num = iterator.next();
+//                sql = "UPDATE msg SET state=0 WHERE toUserId=?";
+//                statement = connection.prepareStatement(sql);
+//                statement.setInt(1,num);
+//                statement.executeUpdate();
+//            }
+//
+//            //返回离线消息列表
+//            if(stringBuilder.length() != 0) {
+//                return stringBuilder.toString();
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        return null;
     }
 
 
-    private void storeMsg(String fromUser, String toUser, String data,int state) {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
+    private void storeMsg(String fromUser, String toUser, String data,String  state) {
+            // 设置用户信息
+        /*    Msg msg = new Msg()
+                    .setFromUserId(fromUser)
+                    .setToUserId(toUser)
+                    .setData(data)
+                    .setState(state);
+            // 插入一条用户数据，如果文档信息已经存在就抛出异常
+         InsertService insertService = new InsertService();
+         insertService.insertMsg(msg);
+*/
+        Document doc = new Document();
+        doc.put("fromUserId", fromUser);
+        doc.put("toUserId" ,toUser);
+        doc.put("data" ,data);
+        doc.put("filePath" ,null);
+        doc.put("sendTime" ,"2022/01/01");
+        doc.put("accepttime" ,"2022/01/03");
+        doc.put("state",state);
+        boolean ret = false;
         try {
-            connection = C3p0Instance.getDataSource().getConnection();
-            String sql = "INSERT INTO msg(fromUserId, toUserId, data, state) VALUES (?,?,?,?)";
-            statement = connection.prepareStatement(sql);
-            statement.setString(1,fromUser);
-            statement.setString(2,toUser);
-            statement.setString(3,data);
-            statement.setInt(4,state);
-            statement.executeUpdate();
-        } catch (SQLException e) {
+            ret = DBUTIL.insert("msg", doc);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

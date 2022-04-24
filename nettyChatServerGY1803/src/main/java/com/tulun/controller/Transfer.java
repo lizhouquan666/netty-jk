@@ -57,8 +57,10 @@ public class Transfer {
             if(isSuccess(id,pwd)) {
                 //数据库操作判断登录是否成功,成功状态返回200，不成功返回300
                 nodes.put("code", 200);
+              //  Jedis jedis = JedisPool.getJedis();
                 hashMap1.put(Integer.parseInt(id),channel);
                 hashMap2.put(channel,Integer.parseInt(id));
+               // jedis.hset(Integer.parseInt(id),channel);
                 success = true;
             } else {
                 nodes.put("code",300);

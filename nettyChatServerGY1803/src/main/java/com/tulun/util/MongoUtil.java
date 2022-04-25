@@ -1,3 +1,4 @@
+/*
 package com.tulun.util;
 
 import com.mongodb.MongoClient;
@@ -12,13 +13,17 @@ import org.bson.conversions.Bson;
 
 import java.util.*;
 
+*/
 /**
  * @Title MongoDBUtil
  * @author GQ_Yin
- * */
+ * *//*
+
 public class MongoUtil {
 
-	/*private static final Logger logger = LoggerFactory.getLogger(MongoDao.class);*/
+	*/
+/*private static final Logger logger = LoggerFactory.getLogger(MongoDao.class);*//*
+
 	public static MongoDatabase DB = null;
 
 
@@ -32,10 +37,12 @@ public class MongoUtil {
 	
 	
 	
-	/**
+	*/
+/**
 	 * 无认证连接数据库
 
-	 */
+	 *//*
+
     private void init(String dbUrl, String dataBase){
     	 MongoClientOptions.Builder build = new MongoClientOptions.Builder();
          build.connectionsPerHost(100); //最大连接数
@@ -62,11 +69,13 @@ public class MongoUtil {
     
     
  
-    /**
+    */
+/**
 	 * 有认证连接数据库
 	 * 
 
-	 */
+	 *//*
+
     private void init(String dbUrl, String dataBase, String username, String password){
     	MongoClientOptions.Builder build = new MongoClientOptions.Builder();
         build.connectionsPerHost(100); //最大连接数
@@ -94,23 +103,27 @@ public class MongoUtil {
     }
     
     
-    /**
+    */
+/**
         * 直接返回DB连接对象
      * 
         * 适用现有方法无法满足查询时, 可自定义Query, insert, update, delete
-     * */
+     * *//*
+
     public static MongoDatabase getDB() {
     	return DB;
     }
  
     
     
-    /**
+    */
+/**
 	 * 根据id检索文档
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public Map<String, Object> queryByID(String table, Object id) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		BasicDBObject query = new BasicDBObject("_id", id);
@@ -128,18 +141,22 @@ public class MongoUtil {
 	}
  
  
-	/**
+	*/
+/**
 	 * 根据doc检索文档集合，当doc是空的时候检索全部
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryByDoc(String table, Document doc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		FindIterable<Document> iterable = collection.find(doc);
-		/**
+		*/
+/**
 		 * 1. 获取迭代器FindIterable<Document> 2. 获取游标MongoCursor<Document>   3.通过游标遍历检索出的文档集合
-		 * */
+		 * *//*
+
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		MongoCursor<Document> cursor = iterable.iterator();
 		while (cursor.hasNext()) {
@@ -153,12 +170,14 @@ public class MongoUtil {
 	}
 	
 	
-	/**
+	*/
+/**
 	 * 根据条件检索文档集合
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryByFilters(String table, Bson filter) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		FindIterable<Document> iterable = collection.find(filter);
@@ -173,13 +192,15 @@ public class MongoUtil {
 		return list;
 	}
 	
-	/**
+	*/
+/**
 	 * 根据条件分页检索文档集合
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryByFilters(String table, Bson filter, int page, int pageSize) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		FindIterable<Document> iterable = collection.find(filter).skip(page*pageSize).limit(pageSize);
@@ -195,13 +216,15 @@ public class MongoUtil {
 	}
 	
 	
-	/**
+	*/
+/**
 	 * 检索全部返回集合
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryAll(String table) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		FindIterable<Document> iterable = collection.find();
@@ -219,12 +242,14 @@ public class MongoUtil {
 	}
 	
 	
-	/**
+	*/
+/**
 	 * 检索全部返回集合（分页）
 	 *
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryAll(String table, int page, int pageSize) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		FindIterable<Document> iterable = collection.find().skip(page*pageSize).limit(pageSize);;
@@ -242,13 +267,15 @@ public class MongoUtil {
 	}
 	
 	
-	/**
+	*/
+/**
 	 * 聚合查询(推荐)
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Map<String, Object>> queryByAggregate(String table, List<Document> listDocument) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		AggregateIterable<Document> iterable = collection.aggregate(listDocument);
@@ -266,13 +293,15 @@ public class MongoUtil {
 	}
  
 	
-	/**
+	*/
+/**
 	 * 遍历迭代器返回文档集合
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public List<Document> findIterable(FindIterable<Document> iterable) throws Exception {
 		List<Document> list = new ArrayList<Document>();
 		MongoCursor<Document> cursor = iterable.iterator();
@@ -285,13 +314,15 @@ public class MongoUtil {
 	}
  
 	
-	/**
+	*/
+/**
 	 * 插入文档
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public boolean insert(String table, Document doc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		collection.insertOne(doc);
@@ -305,13 +336,15 @@ public class MongoUtil {
 	}
  
 	
-	/**
+	*/
+/**
 	 * 插入多条文档(推荐)
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public boolean insertMany(String table, List<Document> doc, int batch) throws Exception {
  
 		MongoCollection<Document> collection = DB.getCollection(table);
@@ -341,13 +374,15 @@ public class MongoUtil {
 	}
 	
 	
-	/**
+	*/
+/**
 	  * 批量保存或更新数据(存在时更新, 不存在时插入)
 	  * 推荐使用
 	 *
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public String saveOrUpdate(String table, String primaryKey, List<Document> docList) throws Exception {
 		String ret = "no params";
 		if(docList.size()>0) {
@@ -368,10 +403,12 @@ public class MongoUtil {
 	}
  
 	
-	/**
+	*/
+/**
 	 * 批量删除文档
 
-	 */
+	 *//*
+
 	public String deleteMany(String table, Bson bson) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		DeleteResult deleteManyResult = collection.deleteMany(bson);
@@ -385,10 +422,12 @@ public class MongoUtil {
 	}
  
 	
-	/**
+	*/
+/**
 	 * 删除单条文档
 	 *
-	 */
+	 *//*
+
 	public boolean deleteOne(String table, Bson bson) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		DeleteResult deleteOneResult = collection.deleteOne(bson);
@@ -402,14 +441,16 @@ return true;
 	}
  
 	
-	/**
+	*/
+/**
 	 * 修改文档(文档不存在时, insert)
 	 * 
 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public String updateManny(String table, Document whereDoc, Document updateDoc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		UpdateResult updateManyResult = collection.updateMany(whereDoc, new Document("$set", updateDoc), new UpdateOptions().upsert(true));
@@ -423,13 +464,15 @@ return true;
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * 修改文档(文档不存在时, insert)
 	 * 
 
 	 * @return
 	 * @throws Exception
-	 */
+	 *//*
+
 	public String updateManny(String table, Bson bson, Document updateDoc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		UpdateResult updateManyResult = collection.updateMany(bson, new Document("$set", updateDoc), new UpdateOptions().upsert(true));
@@ -444,11 +487,13 @@ return true;
 	}
  
 	
-	/**
+	*/
+/**
 	 * 修改单条文档(文档不存在时, insert)
 	 *
 	 * @throws Exception
-	 */
+	 *//*
+
 	public boolean updateOne(String table, Document whereDoc, Document updateDoc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		UpdateResult updateOneResult = collection.updateOne(whereDoc, new Document("$set", updateDoc), new UpdateOptions().upsert(true));
@@ -462,12 +507,14 @@ return true;
 	}
 	
 	
-	/**
+	*/
+/**
 	 * 修改单条文档(文档不存在时, insert)
 	 * 
 
 	 * @throws Exception
-	 */
+	 *//*
+
 	public boolean updateOne(String table, Bson bson, Document updateDoc) throws Exception {
 		MongoCollection<Document> collection = DB.getCollection(table);
 		UpdateResult updateOneResult = collection.updateOne(bson, new Document("$set", updateDoc), new UpdateOptions().upsert(true));
@@ -481,27 +528,32 @@ return true;
 	}
  
 	
-	/**
+	*/
+/**
 	 * 创建集合
 	 * 
 	 * @param table
 	 * @throws Exception
-	 */
+	 *//*
+
 	public void createCol(String table) throws Exception {
 		DB.createCollection(table);
 
 	}
  
 	
-	/**
+	*/
+/**
 	 * 删除集合
 	 * 
 	 * @param table
 	 * @throws Exception
-	 */
+	 *//*
+
 	public void dropCol(String table) throws Exception {
 		DB.getCollection(table).drop();
 
  
 	}
 }
+*/

@@ -9,14 +9,15 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 public class Msg {
-    private int id;
-    private String userId;
+
+    private String id;
+    private String fromUserId;
     private String toUserId;
     private String data;
     private String filePath;
     private String sendTime;
     private String accepttime;
-    private int state;
+    private String state;
 
 
 }

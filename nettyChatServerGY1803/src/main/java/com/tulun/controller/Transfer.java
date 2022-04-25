@@ -3,7 +3,7 @@ package com.tulun.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
-import com.mongodb.client.model.Filters;
+/*import com.mongodb.client.model.Filters;*/
 import com.tulun.cantant.EnMsgType;
 import com.tulun.dao.C3p0Instance;
 import com.tulun.dao.JedisPool;
@@ -13,11 +13,15 @@ import com.tulun.netty.ChannelHandler;
 import com.tulun.pojo.Msg;
 import com.tulun.service.TransferFile;
 import com.tulun.util.JsonUtils;
-import com.tulun.util.MongoUtil;
+/*import com.tulun.util.MongoUtil;*/
 import com.tulun.util.PortUtils;
+import com.tulun.util.SpringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import org.bson.Document;
+/*import org.bson.Document;*/
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
@@ -29,7 +33,12 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class Transfer {
+
+/*    @Autowired
+    @Qualifier("myHttpClient")
+    private MyHttpClient myHttpClient;*/
     //设置集合名称
     private static final String COLLECTION_NAME = "msg";
     //用于存储用户在线信息的hashmap,存储格式为： id，channel
@@ -37,7 +46,7 @@ public class Transfer {
     //用于存储用户在线信息的hashmap，存储格式为：channel，id
     private static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
     //mongodb工具
-    private static MongoUtil DBUTIL = new MongoUtil("192.168.110.161:27017", "mm");
+  //  private static MongoUtil DBUTIL = new MongoUtil("192.168.110.161:27017", "mm");
     //消息解析器
     public String process(String msg, ChannelHandlerContext channel) {
         ObjectNode objectNode = JsonUtils.getObjectNode(msg);
@@ -77,7 +86,7 @@ public class Transfer {
                 offMsg = getOffMsg(id);
 
                 System.out.println("offMsg"+offMsg);
-                if(offMsg != "[]") {
+                if(offMsg.length()>3) {
                     ObjectNode nodes2 = JsonUtils.getObjectNode();
                     nodes2.put("type",String.valueOf(EnMsgType.EN_MSG_OFFLINE_MSG));
                     nodes2.put("msg",offMsg);
@@ -357,11 +366,14 @@ public class Transfer {
      */
     private String getOffMsg(String id) {
 
-        List<Map<String, Object>> ret = null;
-        Object msg = null;
+
+        //方法一：以mongodb工具类的方式
+      /*  List<Map<String, Object>> ret = null;
         try {
             //取出离线消息
           ret  = DBUTIL.queryByFilters(COLLECTION_NAME, Filters.and(Filters.eq("toUserId" ,id),Filters.eq("state" ,"1")));
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -370,13 +382,27 @@ public class Transfer {
 
         try {
             //更新消息状态
-            String ret1 = DBUTIL.updateManny("msg", Filters.eq("toUserId", id),upd);
+         String ret1 = DBUTIL.updateManny("msg", Filters.eq("toUserId", id),upd);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
-        String s = ret.toString();
-        return s;
+      //方法2：以springboot的mongodb服务的形式
+        MyHttpClient myHttpClient =(MyHttpClient) SpringUtil.getBean("myHttpClient");
+        String msg = null;
+        String state = "1";
+       msg = myHttpClient.findByCondition(id,state);
+        if (msg != "[]")
+        {
+          state = "0";
+            myHttpClient.updateMany(id,state);
+        }
+        return msg;
+
+
+        //方法三：mysql的方式
+       // String s = msg.toString();
+
 //        Connection connection = null;
 //        PreparedStatement statement = null;
 //        ResultSet resultSet = null;
@@ -420,7 +446,20 @@ public class Transfer {
 
 
     private void storeMsg(String fromUser, String toUser, String data,String  state) {
-            // 设置用户信息
+
+        //方法1：以springBoot的mongodb的方式
+        MyHttpClient myHttpClient =(MyHttpClient) SpringUtil.getBean("myHttpClient");
+        Msg msg = new Msg()
+                .setFromUserId(fromUser)
+                .setToUserId(toUser)
+                .setData(data)
+                .setState(state);
+        myHttpClient.insertMsg(msg);
+
+
+
+
+            // 方法2：以mongodb工具类的形式 设置用户信息
         /*    Msg msg = new Msg()
                     .setFromUserId(fromUser)
                     .setToUserId(toUser)
@@ -429,7 +468,7 @@ public class Transfer {
             // 插入一条用户数据，如果文档信息已经存在就抛出异常
          InsertService insertService = new InsertService();
          insertService.insertMsg(msg);
-*/
+*//*
         Document doc = new Document();
         doc.put("fromUserId", fromUser);
         doc.put("toUserId" ,toUser);
@@ -443,7 +482,7 @@ public class Transfer {
             ret = DBUTIL.insert("msg", doc);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
     }
 

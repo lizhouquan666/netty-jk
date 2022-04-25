@@ -9,9 +9,15 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+@Service
 public class NettyServer {
-    public void init(int port) {
+    @Value("${server.port}")
+    private int port;
+
+    public void init() {
         NioEventLoopGroup boss = null;
         NioEventLoopGroup worker = null;
         try {

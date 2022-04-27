@@ -28,7 +28,9 @@ import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,10 +68,17 @@ public class Transfer {
             if(isSuccess(id,pwd)) {
                 //数据库操作判断登录是否成功,成功状态返回200，不成功返回300
                 nodes.put("code", 200);
-              //  Jedis jedis = JedisPool.getJedis();
+                Jedis jedis = JedisPool.getJedis();
                 hashMap1.put(Integer.parseInt(id),channel);
                 hashMap2.put(channel,Integer.parseInt(id));
-               // jedis.hset(Integer.parseInt(id),channel);
+                String hostAddress = null;
+                try {
+                   hostAddress = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+                jedis.hset("netty",id,hostAddress);
+
                 success = true;
             } else {
                 nodes.put("code",300);
@@ -704,6 +713,8 @@ public class Transfer {
         ChannelHandlerContext channel = hashMap1.get(id);
         hashMap1.remove(id);
         hashMap2.remove(channel);
+        Jedis jedis = JedisPool.getJedis();
+        jedis.hdel("netty",String.valueOf(id));
         /**
          * 向所有人发送该id下线了
          */
@@ -717,6 +728,8 @@ public class Transfer {
         Integer id = hashMap2.get(channel);
         hashMap1.remove(id);
         hashMap2.remove(channel);
+        Jedis jedis = JedisPool.getJedis();
+        jedis.hdel("netty",String.valueOf(id));
         /**
          * 向所有人发送该id下线了
          */

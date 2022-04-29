@@ -37,7 +37,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Configuration
+@Component
 public class Transfer {
 
 /*    @Autowired
@@ -46,9 +46,9 @@ public class Transfer {
     //设置集合名称
     private static final String COLLECTION_NAME = "msg";
     //用于存储用户在线信息的hashmap,存储格式为： id，channel
-    private static  ConcurrentHashMap<Integer, ChannelHandlerContext> hashMap1 = new ConcurrentHashMap<>();
+    public static  ConcurrentHashMap<Integer, ChannelHandlerContext> hashMap1 = new ConcurrentHashMap<>();
     //用于存储用户在线信息的hashmap，存储格式为：channel，id
-    public static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
     //mongodb工具
   //  private static MongoUtil DBUTIL = new MongoUtil("192.168.110.161:27017", "mm");
     //消息解析器

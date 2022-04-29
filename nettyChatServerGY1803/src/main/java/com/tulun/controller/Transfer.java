@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tulun.cantant.EnMsgType;
 import com.tulun.dao.C3p0Instance;
 import com.tulun.dao.JedisPool;
+import com.tulun.kafka.PkafkaHttpClient;
 import com.tulun.mail.Mail;
 import com.tulun.netty.ChannelHandler;
 
@@ -21,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 /*import org.bson.Document;*/
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 
@@ -35,7 +37,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-
+@Configuration
 public class Transfer {
 
 /*    @Autowired
@@ -46,7 +48,7 @@ public class Transfer {
     //用于存储用户在线信息的hashmap,存储格式为： id，channel
     private static  ConcurrentHashMap<Integer, ChannelHandlerContext> hashMap1 = new ConcurrentHashMap<>();
     //用于存储用户在线信息的hashmap，存储格式为：channel，id
-    private static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<ChannelHandlerContext,Integer> hashMap2 = new ConcurrentHashMap<>();
     //mongodb工具
   //  private static MongoUtil DBUTIL = new MongoUtil("192.168.110.161:27017", "mm");
     //消息解析器
@@ -247,11 +249,37 @@ public class Transfer {
 
             String state = "0";
             //判断要发送的用户是否在线
-            if(isOnline(toUser)) {
+            if(isOnline1(toUser)) {
                 //在线直接转发消息
+
+                //保存数据
                 storeMsg(fromUser,toUser,data,state);
-                ChannelHandlerContext channelToUser = hashMap1.get(Integer.parseInt(toUser));
-                channelToUser.channel().writeAndFlush(msg);
+
+                //如果在同一台netty服务器那么可以直接获取channel
+                ChannelHandlerContext channelToUser =null;
+                channelToUser  = hashMap1.get(Integer.parseInt(toUser));
+                if (channelToUser==null)
+                {
+                    //发消息
+
+
+
+                    //首先找出toUser在哪个服务器上
+                    Jedis jedis = JedisPool.getJedis();
+                    String topic = jedis.hget("netty", toUser);
+                    PkafkaHttpClient pkafkaHttpClient = (PkafkaHttpClient) SpringUtil.getBean("pkafkaHttpClient");
+                    pkafkaHttpClient.kafkap(topic,msg);
+
+
+
+
+                }else {
+                    //在此台服务器上直接消息
+                    channelToUser.channel().writeAndFlush(msg);
+                }
+
+
+
 
                 //给发送方回复发送成功
                 //封装返回数据类型
@@ -262,7 +290,7 @@ public class Transfer {
                 String recvMsg = nodes.toString();
 
                 channel.channel().writeAndFlush(recvMsg);
-            } else if(isExistUser(fromUser)){
+            }  else if(isExistUser(fromUser)){
                 //不在线存储该消息到数据库
                 state = "1";
                 storeMsg(fromUser,toUser,data,state);
@@ -497,6 +525,11 @@ public class Transfer {
 
     private boolean isOnline(String toUser) {
         return hashMap1.containsKey(Integer.parseInt(toUser));
+    }
+
+    private boolean isOnline1(String toUser){
+        Jedis jedis = JedisPool.getJedis();
+        return   jedis.hexists("netty",toUser);
     }
 
     private boolean modifyPwd(String id, String newPwd) {
